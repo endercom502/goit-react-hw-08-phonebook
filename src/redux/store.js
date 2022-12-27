@@ -1,9 +1,19 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { contactReducer, filterReducer } from './reducer';
+import { contactsApi } from './auth/contactsApi';
+import { setupListeners } from '@reduxjs/toolkit/query';
+import { filterReducer } from './filterSlice';
+import authReducer from './auth/authSlice';
 
 export const store = configureStore({
   reducer: {
-    contacts: contactReducer,
     filter: filterReducer,
+    auth: authReducer,
+    [contactsApi.reducerPath]: contactsApi.reducer,
   },
+
+  middleware: getDefaultMiddleware =>
+    getDefaultMiddleware().concat(contactsApi.middleware),
+  devTools: true,
 });
+
+setupListeners(store.dispatch);

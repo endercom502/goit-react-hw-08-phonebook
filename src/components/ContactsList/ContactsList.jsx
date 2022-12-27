@@ -1,48 +1,52 @@
 import PropTypes from 'prop-types';
 import style from './ContactsList.module.css';
-import { getFilterValue, getContacts } from 'redux/selectors';
-import { useSelector, useDispatch } from 'react-redux';
-import { deleteContact } from 'redux/actions';
+import { getFilterValue } from 'redux/selectors';
+import { useSelector } from 'react-redux';
+import {
+  useGetContactsQuery,
+  useDeleteContactMutation,
+} from 'redux/auth/contactsApi';
+import Loader from 'components/Loader/Loader';
+import DeleteIcon from '@mui/icons-material/Delete';
+import IconButton from '@mui/material/IconButton';
 
 export const ContactList = () => {
-  
-  const contacts = useSelector(getContacts);
-  const filterValue = useSelector(getFilterValue);
-  const dispatch = useDispatch();
+  const { data, isLoading } = useGetContactsQuery();
+  const [deleteContact] = useDeleteContactMutation();
 
-  const filteredContacts = contacts.filter(contact =>
-    contact.name.toLowerCase().includes(filterValue)
+  const filterValue = useSelector(getFilterValue);
+
+  if (isLoading) {
+    return <Loader />;
+  }
+
+  if (!data) {
+    return <div>No contacts</div>;
+  }
+
+  const contactsFilter = data.filter(contact =>
+    contact.name.toLowerCase().includes(filterValue.toLowerCase())
   );
 
-  const toDelete = idToDelete => {
-    return dispatch(deleteContact(idToDelete));
-  };
-
   return (
-    <div>
-      {filteredContacts.length > 0 ? (
-        <ul className={style.contactsList}>
-          
-          {filteredContacts.map(contact => {
-            
-            return (
-              <li className={style.contactsItem} key={contact.id}>
-                <span>{`${contact.name}: ${contact.number}`}</span>
-                <button
-                  type="button"
-                  className={style.contactBtn}
-                  onClick={() => toDelete(contact.id)}
-                >
-                  Delete
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      ) : (
-        <div>There's no results</div>
-      )}
-    </div>
+    <ul className={style.contactsList}>
+      {contactsFilter.map(({ id, name, number }) => (
+        <li key={id} className={style.contactsItem}>
+          <div className={style.wrapper}>
+            <span className={style.contactsName}>{`${name}`}</span>
+            <span className={style.contactsPhone}>{`${number}`}</span>
+            <IconButton
+              disabled={isLoading}
+              onClick={() => deleteContact(id)}
+              edge="end"
+              aria-label="delete"
+            >
+              <DeleteIcon />
+            </IconButton>
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 };
 
